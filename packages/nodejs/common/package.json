@@ -1,0 +1,49 @@
+{
+  "name": "@soothe/common",
+  "version": "0.0.1",
+  "license": "UNLICENSED",
+  "private": true,
+  "types": "src/index.ts",
+  "main": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./dist/index.js",
+      "types": "./src/index.ts"
+    },
+    "./constants": {
+      "import": "./src/constants.ts",
+      "require": "./dist/constants.js",
+      "types": "./src/constants.ts"
+    },
+    "./utils": {
+      "import": "./src/utils.ts",
+      "require": "./dist/utils.js",
+      "types": "./src/utils.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "constants": [
+        "./src/constants.ts"
+      ],
+      "utils": [
+        "./src/utils.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist && rm -f tsconfig.tsbuildinfo",
+    "build": "node esbuild.js",
+    "typecheck": "tsc  src/index.ts --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "yarn lint --fix"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@soothe/scripts": "0.0.1",
+    "@soothe/tsconfig": "0.0.1"
+  }
+}

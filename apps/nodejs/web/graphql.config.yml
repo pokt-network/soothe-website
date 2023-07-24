@@ -1,0 +1,5 @@
+#todo: load token from env
+schema:
+  - http://localhost:3003/poktscan/api/graphql:
+      headers:
+        Authorization: 22b59f87-3bcd-45d1-be7a-acf726d93c02

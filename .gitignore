@@ -1,0 +1,63 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next.js - builds
+.next
+out
+build
+dist
+
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env
+.env.*
+
+# turbo
+.turbo
+
+# intelij
+.idea
+
+tsconfig.tsbuildinfo
+tsconfig.server.tsbuildinfo
+
+# golang binaries
+#bin/poktscan-cli
+bin/*.json
+bin/*-cli
+!bin/chains.json
+
+# current pks cli release
+infrastructure/ansible_old/roles/poktscan/files/*-cli
+
+# Visual Studio Code
+.vscode
+.history
+
+# Anlytics misc
+untracked
+
+# Python
+__pycache__
+# Deleted files
+.fuse_hidden*
+
+rate_limit*.log
+**/gql

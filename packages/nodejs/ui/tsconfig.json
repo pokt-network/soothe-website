@@ -1,0 +1,10 @@
+{
+  "extends": "@soothe/tsconfig/react.json",
+  "compilerOptions": {
+    "outDir": "./dist/esm",
+    "rootDir": "./src",
+    "declaration": false
+  },
+  "exclude": ["node_modules", "dist"],
+  "include": ["src"]
+}

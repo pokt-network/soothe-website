@@ -1,0 +1,48 @@
+{
+  "name": "soothe",
+  "version": "0.0.0",
+  "license": "UNLICENSED",
+  "private": true,
+  "workspaces": [
+    "apps/nodejs/*",
+    "packages/nodejs/*"
+  ],
+  "scripts": {
+    "clean": "turbo run clean --parallel --concurrency=100% && rm -rf out && rm -rf .turbo && rm -rf node_modules",
+    "format": "prettier --loglevel error --write \"**/*.{js,ts,jsx,tsx}\"",
+    "format:ci": "prettier --loglevel warn --check \"**/*.{js,ts,jsx,tsx}\"",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint --concurrency=100%",
+    "lint:fix": "turbo run lintfix --concurrency=100%",
+    "dev": "turbo run dev --no-cache --parallel --concurrency=100%",
+    "dev:web": "yarn dev --filter=\"@soothe/web\"",
+    "dev:api": "yarn dev --filter=\"@soothe/api\"",
+    "build": "turbo run build --concurrency=100%",
+    "build:docker": "turbo run build:docker --concurrency=100%",
+    "build:ci": "./build-ci.sh",
+    "build:web": "yarn build --filter=\"@soothe/web\"",
+    "build:web:docker": "yarn build:docker --filter=\"@soothe/web\"",
+    "build:api": "yarn build --filter=\"@soothe/api\"",
+    "build:api:docker": "yarn build:docker --filter=\"@soothe/api\"",
+    "test": "turbo run test",
+    "commit": "turbo run commit"
+  },
+  "dependencies": {
+    "@changesets/cli": "2.26.0",
+    "dotenv": "16.0.0",
+    "eslint": "8.36.0",
+    "turbo": "1.4.3"
+  },
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
+  },
+  "packageManager": "yarn@1.22.19",
+  "resolutions": {
+    "@types/react": "18.2.0",
+    "prettier": "2.7.1",
+    "@graphql-codegen/cli": "3.3.1",
+    "@graphql-typed-document-node/core": "3.2.0"
+
+  }
+}

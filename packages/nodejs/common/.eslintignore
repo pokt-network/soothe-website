@@ -1,0 +1,8 @@
+next-env.d.ts
+dist
+.turbo
+fixtures
+migrations
+specs
+**/*.spec.ts
+esbuild.js

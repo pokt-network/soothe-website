@@ -1,0 +1,6 @@
+next-env.d.ts
+dist
+.turbo
+fixtures
+migrations
+**/*.spec.ts

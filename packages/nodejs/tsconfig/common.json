@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Common Packages",
+  "compilerOptions": {
+    "module": "commonjs",
+    "noEmit": false,
+    "incremental": false,
+    "target": "ES6",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "lib": ["ES2020"]
+  },
+  "exclude": ["node_modules", "dist"],
+  "include": ["src"]
+}
