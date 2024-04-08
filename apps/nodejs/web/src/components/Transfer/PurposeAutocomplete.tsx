@@ -1,129 +1,73 @@
-import type { FilterOptionsState } from '@mui/material'
-import type { Control } from 'react-hook-form/dist/types'
-import type { RegisterOptions } from 'react-hook-form/dist/types/validator'
+import type { FilterOptionsState, Theme } from '@mui/material'
+import type { TransferFormValues } from '@/components/Transfer/TransferForm'
 import type { LabelAndValue } from '@/types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Autocomplete, { AutocompleteProps } from '@mui/material/Autocomplete'
 import TextField, { TextFieldProps } from '@mui/material/TextField'
-import { Controller, useWatch } from 'react-hook-form'
-
-type CustomControl = Omit<Control, '_options' | 'register' | 'unregister'>
+import { Controller, useFormContext } from 'react-hook-form'
+import Typography from '@mui/material/Typography'
+import { useTheme } from '@mui/material/styles'
+import Stack from '@mui/material/Stack'
+import { useAppSelector } from '@/hooks/redux'
 
 interface PurposeAutocompleteProps
   extends Omit<AutocompleteProps<LabelAndValue, false, false, false>, 'renderInput' | 'options'> {
-  name: string
-  control: CustomControl
-  rules?: Omit<RegisterOptions, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>
-  purposes: readonly LabelAndValue[]
   textFieldProps?: TextFieldProps
 }
 
-interface PurposeItem extends LabelAndValue {
-  inputValue?: string
-  isNew?: boolean
-}
-
 const PurposeAutocomplete: React.FC<PurposeAutocompleteProps> = ({
-  purposes,
-  name,
-  rules,
-  control,
   textFieldProps,
+  ...autocompleteProps
 }) => {
-  const [value, setValue] = useState<PurposeItem>(null)
+  const { control } = useFormContext<TransferFormValues>()
+  const purposes = useAppSelector((state) => state.purpose.purposes)
 
   const purposesMap = useMemo(() => {
-    return purposes.reduce((acc, purpose) => ({ ...acc, [purpose.value]: purpose }), {})
+    return purposes.reduce((acc, purpose) => ({ ...acc, [purpose._id]: purpose.name }), {})
   }, [purposes])
 
-  const options: PurposeItem[] = useMemo(() => {
-    if (!value || purposesMap[value?.value]) {
-      return purposes as PurposeItem[]
-    }
-
-    return [value, ...purposes]
-  }, [purposes, purposesMap, value])
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const valueOnForm = useWatch({ control, name }) as unknown as string
-
-  useEffect(() => {
-    if (purposesMap[valueOnForm]) {
-      setValue(purposesMap[valueOnForm])
-    } else {
-      setValue({
-        label: valueOnForm,
-        value: valueOnForm,
-        isNew: true,
-      })
-    }
-  }, [valueOnForm])
-
   const filterOptions = useCallback(
-    (options: PurposeItem[], state: FilterOptionsState<PurposeItem>) => {
+    (_, state: FilterOptionsState<string>) => {
       const value = state.inputValue.toLowerCase().trim()
 
-      if (!value) return options
+      if (!value) return Object.keys(purposesMap)
 
-      const isExisting = options.some((option) => option.label === state.inputValue)
-
-      if (!isExisting) {
-        options.push({
-          label: `Add "${state.inputValue}"`,
-          inputValue: state.inputValue,
-          value: state.inputValue,
-          isNew: true,
+      return purposes
+        .filter(({ name }) => {
+          return !!name.toLowerCase().includes(value)
         })
-      }
-
-      return options.filter(({ label, value, isNew }) => {
-        return !!(label.toLowerCase().includes(value) || isNew)
-      })
+        .map(({ _id }) => _id)
     },
-    []
+    [purposesMap, purposes]
   )
 
-  const getOptionLabel = useCallback((option: LabelAndValue) => {
-    if (typeof option === 'string') {
-      return option
-    }
-
-    return option.label
-  }, [])
+  const getOptionLabel = useCallback(
+    (purposeId: string) => {
+      return purposesMap[purposeId] || purposeId
+    },
+    [purposesMap]
+  )
 
   return (
     <Controller
-      name={name}
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      name={'purpose'}
       control={control}
       rules={{
         required: 'Required',
-        ...rules,
       }}
       render={({ field: { onChange, ...otherProps }, fieldState: { error } }) => {
         return (
           <Autocomplete
-            options={options}
+            options={Object.keys(purposesMap)}
             filterOptions={filterOptions}
             disableClearable={true}
             selectOnFocus={true}
             clearOnBlur={true}
             getOptionLabel={getOptionLabel}
-            // isOptionEqualToValue={isOptionEqualToValue}
-            onChange={(event, newValue: PurposeItem) => {
-              if (typeof newValue === 'string') {
-                onChange(newValue)
-              } else if (newValue && newValue.inputValue) {
-                onChange(newValue.inputValue)
-              } else {
-                onChange(newValue.value)
-              }
+            onChange={(_, newValue: string) => {
+              onChange(newValue)
             }}
-            // onChange={(_, purpose: LabelAndValue) => onChange(purpose.value)}
             {...otherProps}
-            value={value}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -132,6 +76,7 @@ const PurposeAutocomplete: React.FC<PurposeAutocompleteProps> = ({
                 {...textFieldProps}
               />
             )}
+            {...autocompleteProps}
           />
         )
       }}
@@ -139,4 +84,83 @@ const PurposeAutocomplete: React.FC<PurposeAutocompleteProps> = ({
   )
 }
 
-export default PurposeAutocomplete
+const NewPurposeInput = () => {
+  const { control } = useFormContext<TransferFormValues>()
+  return (
+    <Controller
+      control={control}
+      name={'new_purpose_name'}
+      rules={{
+        required: 'Required',
+        maxLength: {
+          value: 25,
+          message: 'The max amount of characters allowed is 25',
+        },
+        minLength: {
+          value: 3,
+          message: 'The min amount of characters allowed is 3',
+        },
+      }}
+      render={({ field: { ref, ...field }, fieldState: { error } }) => (
+        <TextField
+          label={'Purpose Name'}
+          {...field}
+          inputRef={ref}
+          error={!!error}
+          helperText={error?.message}
+          sx={{
+            width: { xs: 1, md: 'unset' },
+            flexGrow: { md: 1 },
+          }}
+        />
+      )}
+    />
+  )
+}
+
+const PurposeInput = () => {
+  const theme: Theme = useTheme()
+  const { watch, setValue, clearErrors, setFocus } = useFormContext<TransferFormValues>()
+  const [addingNew] = watch(['adding_new_purpose'])
+
+  const toggleAddingNew = () => {
+    setValue('adding_new_purpose', !addingNew)
+  }
+
+  useEffect(() => {
+    setValue('new_purpose_name', '')
+    clearErrors('new_purpose_name')
+    if (addingNew) {
+      setFocus('new_purpose_name')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addingNew])
+
+  let input: React.ReactNode
+  if (addingNew) {
+    input = <NewPurposeInput />
+  } else {
+    input = <PurposeAutocomplete />
+  }
+
+  return (
+    <Stack spacing={0.5} marginBottom={-1.5} position={'relative'}>
+      {input}
+      <Stack direction={'row'} alignItems={'center'} justifyContent={'flex-end'}>
+        <Typography
+          variant={'body2'}
+          color={addingNew ? theme.customColors.dark75 : theme.customColors.primary500}
+          sx={{ textDecoration: 'underline', cursor: 'pointer', userSelect: 'none' }}
+          position={'relative'}
+          zIndex={10}
+          onClick={toggleAddingNew}
+          textAlign={'right'}
+        >
+          {addingNew ? 'Cancel' : 'New purpose'}
+        </Typography>
+      </Stack>
+    </Stack>
+  )
+}
+
+export default PurposeInput

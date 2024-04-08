@@ -1,71 +1,109 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import get from 'lodash/get'
+import React, { useCallback, useEffect, useRef } from 'react'
+import { useSnackbar } from 'notistack'
 import Button from '@mui/material/Button'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
 import {
-  disconnectFromVault,
-  establishVaultConnection,
-  initializeVaultConnection,
-  reset,
+  displayConnectDialog,
+  hideConnectDialog,
+  resetConnection,
+  setAccounts,
 } from '@/features/connection/slice'
+import ProviderService, { SupportedExtensionsProtocol } from '@/provider'
+import ProviderListDialog from '@/components/Connection/ProviderListDialog'
+import EthereumIcon from '@/assets/icons/chains/ethereum.svg'
+import PocketIcon from '@/assets/icons/chains/pocket.svg'
 
-const ConnectButton: React.FC = () => {
-  const { status, permissions } = useAppSelector((state) => state.connection)
+interface ConnectButtonProps {
+  protocol: SupportedExtensionsProtocol
+}
+
+const ConnectButton: React.FC<ConnectButtonProps> = ({ protocol }) => {
+  const { enqueueSnackbar } = useSnackbar()
+
+  const providers = useAppSelector((state) => state.connection.providersByProtocol[protocol])
+  const connection = useAppSelector((state) => state.connection.connectionByProtocol[protocol])
+  const status = connection?.status || 'not_connected'
+  const currentUuid = useRef<string>(null)
+  const providersWithListener = useRef<Record<string, boolean>>({})
+
   const dispatch = useAppDispatch()
+
   useEffect(() => {
-    window.postMessage(
-      {
-        to: 'VAULT_KEYRING',
-        type: 'CHECK_CONNECTION_REQUEST',
-      },
-      '*'
-    )
+    if (connection?.status === 'connected') {
+      currentUuid.current = connection.providerUuid
+      if (!providersWithListener.current[connection.providerUuid]) {
+        providersWithListener.current[connection.providerUuid] = true
 
-    const messageListener = (event: MessageEvent) => {
-      const { data } = event
+        ProviderService.getProviderClass(protocol)
+          .getProvider(connection.providerUuid)
+          .then((provider) => {
+            const uuid = connection.providerUuid
 
-      if (data?.from === 'VAULT_KEYRING' && data?.type === 'CONNECTION_RESPONSE') {
-        const connectionEstablished = get(data, 'data.connectionEstablished', false)
-        const permissions = get(data, 'data.connectionEstablished', [])
-        if (connectionEstablished && permissions?.length && status === 'not_connected') {
-          dispatch(initializeVaultConnection(permissions))
-        }
+            provider?.on('accountsChanged', (accounts) => {
+              if (uuid === currentUuid.current) {
+                if (accounts.length) {
+                  dispatch(setAccounts({ accounts, protocol }))
+                } else {
+                  dispatch(resetConnection(protocol))
+                }
+              }
+            })
+          })
       }
+    } else {
+    }
+  }, [connection])
 
-      if (data?.from === 'VAULT_KEYRING' && data?.type === 'DISCONNECT_RESPONSE') {
-        const disconnected = get(data, 'data.disconnected', false)
-        if (disconnected) {
-          dispatch(reset())
-        }
+  const onClickConnect = useCallback(async () => {
+    try {
+      if (providers.length) {
+        dispatch(displayConnectDialog(protocol))
+      } else if (!providers.length) {
+        enqueueSnackbar('Provider not found', {
+          variant: 'error',
+          preventDuplicate: true,
+          key: `${protocol}_provider_not_found`,
+          autoHideDuration: 4000,
+        })
+      }
+    } catch (e) {
+      if (ProviderService.isNotFoundError(e)) {
+        enqueueSnackbar(e.message, {
+          variant: 'error',
+          preventDuplicate: true,
+          key: `${protocol}_provider_not_found`,
+          autoHideDuration: 4000,
+        })
       }
     }
-
-    window.addEventListener('message', messageListener)
-
-    return () => {
-      window.removeEventListener('message', messageListener)
-    }
-  }, [])
-
-  const onClickConnect = useCallback(() => {
-    if (status === 'not_connected') {
-      dispatch(establishVaultConnection())
-    } else if (status === 'connected') {
-      dispatch(disconnectFromVault())
-    }
-  }, [status, dispatch])
+  }, [dispatch, protocol, enqueueSnackbar, providers])
 
   const text =
     status === 'not_connected' ? 'Connect' : status === 'connected' ? 'Connected' : 'Connecting'
 
   return (
-    <Button
-      variant={'contained'}
-      sx={{ textTransform: 'uppercase', marginRight: '20px!important' }}
-      onClick={onClickConnect}
-    >
-      {text}
-    </Button>
+    <>
+      <Button
+        variant={'outlined'}
+        sx={{
+          backgroundColor: 'rgba(255,255,255, 0.05)',
+          textTransform: 'uppercase',
+          marginRight: '20px!important',
+          '& svg': {
+            transform: 'scale(0.6)',
+          },
+        }}
+        onClick={onClickConnect}
+      >
+        {protocol === SupportedExtensionsProtocol.Pocket ? <PocketIcon /> : <EthereumIcon />}
+        {text}
+      </Button>
+      <ProviderListDialog
+        open={!!connection?.showConnectDialog}
+        onClose={() => dispatch(hideConnectDialog(protocol))}
+        protocol={protocol}
+      />
+    </>
   )
 }
 

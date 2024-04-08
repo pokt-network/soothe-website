@@ -15,6 +15,11 @@ export interface Account {
   chain: SupportedChains
 }
 
+export interface Purpose {
+  _id: string
+  name: string
+}
+
 export interface Wallet {
   address: string
   description?: string
@@ -24,11 +29,11 @@ export interface Wallet {
 
 export interface Contact {
   _id: string
-  first_name: string
-  last_name: string
+  first_name?: string
+  last_name?: string
   company_name?: string
   display_name?: string
-  email: string
+  email?: string
   phone_number?: string
   type: ContactType
   wallets: Wallet[]
@@ -37,4 +42,25 @@ export interface Contact {
 export interface LabelAndValue<T = string> {
   label: string
   value: T
+}
+
+export interface SuggestedGasFee {
+  low: Speed
+  medium: Speed
+  high: Speed
+  estimatedBaseFee: string
+  networkCongestion: number
+  latestPriorityFeeRange: string[]
+  historicalPriorityFeeRange: string[]
+  historicalBaseFeeRange: string[]
+  priorityFeeTrend: string
+  baseFeeTrend: string
+}
+
+export interface Speed {
+  suggestedMaxPriorityFeePerGas: string
+  suggestedMaxFeePerGas: string
+  minWaitTimeEstimate: number
+  maxWaitTimeEstimate: number
+  amount?: string
 }

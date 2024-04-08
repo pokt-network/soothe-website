@@ -10,13 +10,13 @@ export enum SupportedChains {
 export const NetworksByChains: Record<SupportedChains, LabelAndValue[]> = {
   pocket: [
     {
-      label: 'POKT',
+      label: 'POKT Mainnet',
       value: 'pokt',
     },
   ],
   ethereum: [
     {
-      label: 'Ethereum',
+      label: 'Ethereum Mainnet',
       value: 'ethereum',
     },
   ],

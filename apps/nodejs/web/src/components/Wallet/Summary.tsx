@@ -242,7 +242,6 @@ const WalletSummary: React.FC<SummaryProps> = ({ account }) => {
       {accountToTransfer && (
         <TransferDialog
           account={accountToTransfer}
-          accountBalance={balance || 0}
           open={!!accountToTransfer}
           onClose={onCloseTransferDialog}
         />

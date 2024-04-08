@@ -1,11 +1,9 @@
-import Header from '@/components/Contact/Header'
-import List from '@/components/Contact/List'
+import ContactsIndex from '@/components/Contact'
 
 export default function Home() {
   return (
     <main>
-      <Header/>
-      <List/>
+      <ContactsIndex />
     </main>
   )
 }

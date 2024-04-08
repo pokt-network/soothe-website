@@ -8,7 +8,7 @@ import styled from '@mui/system/styled'
 import Toolbar from '@mui/material/Toolbar'
 import MuiAppBar from '@mui/material/AppBar'
 import Typography from '@mui/material/Typography'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import React, { useCallback, useMemo, useState } from 'react'
 import { AppBarHeight, SESSION_COOKIE_NAME } from '@/constants'
 import UserMenu from '@/components/AppBar/UserMenu'
@@ -20,6 +20,7 @@ import { reset as resetContacts } from '@/features/contact/slice'
 import CreateContactDialog from '@/components/Contact/CreateUpdateDialog'
 import RouteButton, { RouteButtonProps } from '@soothe/ui/src/components/RouteButton'
 import ConnectButton from '@/components/AppBar/ConnectButton'
+import { SupportedExtensionsProtocol } from '@/provider'
 
 const StyledToolbar = styled(Toolbar)((param) => {
   const theme: Theme = param.theme as unknown as Theme
@@ -156,7 +157,8 @@ const AppBar: React.FC<AppBarProps> = ({ justDisplayLogo }) => {
                 alignItems={'center'}
                 display={justDisplayLogo ? 'none' : 'flex'}
               >
-                <ConnectButton />
+                <ConnectButton protocol={SupportedExtensionsProtocol.Pocket} />
+                <ConnectButton protocol={SupportedExtensionsProtocol.Ethereum} />
                 <UserMenu
                   workspaceName={workspace.name}
                   onExportWorkspace={onExportWorkspace}

@@ -275,7 +275,6 @@ const Accounts = () => {
       {accountToTransfer && (
         <TransferDialog
           account={accountToTransfer}
-          accountBalance={accountToTransfer?.balance || 0}
           open={!!accountToTransfer}
           onClose={onCloseTransferDialog}
         />

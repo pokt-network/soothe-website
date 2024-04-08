@@ -1,3 +1,5 @@
+import type { Transaction } from 'web3-types'
+import type { SuggestedGasFee } from '@/types'
 import { BaseChainDatasource, ListTransfersByAddressResponse } from '@/datasource/chains/base'
 import { convertFromWeiToEtherNumber } from '@/utils'
 import axios, { AxiosResponse } from 'axios'
@@ -81,8 +83,12 @@ export class EthereumDatasource implements BaseChainDatasource {
     }
   }
 
-  async getTransferFee() {
-    //todo: add this method
-    return 0
+  async getTransferFee(transaction: Transaction) {
+    const response = await axios.post<unknown, { data: SuggestedGasFee }>('/api/suggestedGasFee', {
+      chainId: '1',
+      transaction,
+    })
+
+    return response.data
   }
 }

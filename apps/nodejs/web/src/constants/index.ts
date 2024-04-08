@@ -1,6 +1,5 @@
-// todo: Change with env
-export const KEY_ENC_DATA = '2q345g3q54rgbq354rgbq354rgbh35rqbgh35rq'
-export const SESSION_COOKIE_NAME = 'ga_354gh-gqq3425g-q354rg'
+export const KEY_ENC_DATA = process.env.STR_TO_ENCRYPT_KEY
+export const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME
 
 export const UPOKT_TO_POKT_DEM = 1e6
 export const WEI_TO_ETHER_DEM = 1e18

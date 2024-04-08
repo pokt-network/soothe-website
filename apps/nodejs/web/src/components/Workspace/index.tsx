@@ -6,6 +6,7 @@ import List from '@/components/Workspace/List'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
 import { initialize as initializeAccounts, reset as resetAccounts } from '@/features/account/slice'
 import { initialize as initializeContacts, reset as resetContacts } from '@/features/contact/slice'
+import { initialize as initializePurposes, reset as resetPurposes } from '@/features/purpose/slice'
 import Cookies from 'js-cookie'
 import CryptoJs from 'crypto-js'
 import moment, { Moment } from 'moment-timezone'
@@ -16,6 +17,7 @@ import { useSnackbar } from 'notistack'
 import Stack from '@mui/material/Stack'
 import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/CloseRounded'
+import { loadProviders } from '@/features/connection/slice'
 
 interface WorkspaceProps {
   children: React.ReactNode
@@ -36,9 +38,15 @@ const Workspace: React.FC<WorkspaceProps> = ({ children }) => {
   }, [])
 
   useEffect(() => {
+    dispatch(loadProviders())
+  }, [])
+
+  useEffect(() => {
     if (workspaceKey && workspace) {
       dispatch(initializeAccounts({ key: workspaceKey, workspaceId: workspace._id }))
       dispatch(initializeContacts({ key: workspaceKey, workspaceId: workspace._id }))
+      dispatch(initializePurposes({ key: workspaceKey, workspaceId: workspace._id }))
+      dispatch(initializePurposes({ key: workspaceKey, workspaceId: workspace._id }))
       setSessionCookie(workspace._id, workspaceKey)
       sessionCookie.current = true
     }
@@ -56,6 +64,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ children }) => {
         dispatch(clearWorkspace())
         dispatch(resetAccounts())
         dispatch(resetContacts())
+        dispatch(resetPurposes())
         sessionCookie.current = false
         enqueueSnackbar(
           <Stack

@@ -1,5 +1,5 @@
-import Transfer from '@/components/Transfer'
+import Transfer from '@/components/Transfer/TransferForm'
 
 export default function Page() {
-  return <Transfer/>
+  return <Transfer />
 }

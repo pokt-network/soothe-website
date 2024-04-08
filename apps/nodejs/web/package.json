@@ -40,7 +40,8 @@
     "react-qr-code": "2.0.11",
     "react-redux": "8.0.5",
     "uuid": "9.0.0",
-    "web3-utils": "^1.9.0"
+    "web3-eth": "^4.5.0",
+    "web3-utils": "^4.2.2"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "3.3.1",

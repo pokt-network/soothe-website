@@ -1,10 +1,10 @@
+import type { Transaction } from 'web3-types'
+import type { SuggestedGasFee } from '@/types'
 import { SupportedChains } from '@/constants/supportedChains'
 import { useCallback, useEffect, useState } from 'react'
 import DatasourceByChain from '@/datasource/chains'
 import {
   BalanceByAddressType,
-  IPendingBalanceByAddress,
-  ListTransferItem,
   ListTransfersByAddressResponse,
   TransferSummary,
 } from '@/datasource/chains/base'
@@ -123,30 +123,35 @@ export const useListTransfers = () => {
   }
 }
 
-export const useGetTransferFeeByChain = (chain: SupportedChains) => {
+export const useGetTransferFeeByChain = (chain: SupportedChains, getAutomatically = true) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(false)
-  const [fee, setFee] = useState<number>(null)
+  const [fee, setFee] = useState<number | SuggestedGasFee>(null)
 
-  const getTransferFeeOfChain = useCallback(() => {
-    if (!chain) {
-      setFee(null)
-      return
-    }
+  const getTransferFeeOfChain = useCallback(
+    (transaction?: Transaction) => {
+      if (!chain) {
+        setFee(null)
+        return
+      }
 
-    setIsLoading(true)
+      setIsLoading(true)
 
-    DatasourceByChain[chain]
-      .getTransferFee()
-      .then((res) => {
-        setFee(res)
-      })
-      .catch(() => setError(true))
-      .finally(() => setIsLoading(false))
-  }, [chain])
+      DatasourceByChain[chain]
+        .getTransferFee(transaction)
+        .then((res) => {
+          setFee(res)
+        })
+        .catch(() => setError(true))
+        .finally(() => setIsLoading(false))
+    },
+    [chain]
+  )
 
   useEffect(() => {
-    getTransferFeeOfChain()
+    if (getAutomatically) {
+      getTransferFeeOfChain()
+    }
   }, [getTransferFeeOfChain])
 
   return { isLoading, error, fee, getTransferFeeOfChain }

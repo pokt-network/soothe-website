@@ -1,25 +1,30 @@
+import type { TransferFormValues } from '@/components/Transfer/TransferForm'
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
 import Skeleton from '@mui/material/Skeleton'
+import { useFormContext } from 'react-hook-form'
 import Typography from '@mui/material/Typography'
 import { roundAndSeparate } from '@/utils'
+import { useTransferContext } from '@/context/TransferContext'
+import FeeInput from '@/components/Transfer/FormInputs/FeeInput'
 
-interface AmountHelperTextProps {
-  accountBalance: number
-  transferFee: number
-  isLoadingBalance?: boolean
-  isLoadingFee?: boolean
-  onClickAll: () => void
-}
+export default function AmountHelperText() {
+  const { fromAvailableBalance, feeSelected, balanceFetchStatus, feeFetchStatus } =
+    useTransferContext()
+  const { setValue, clearErrors } = useFormContext<TransferFormValues>()
 
-const AmountHelperText: React.FC<AmountHelperTextProps> = ({
-  accountBalance,
-  onClickAll,
-  isLoadingBalance,
-  isLoadingFee,
-  transferFee,
-}) => {
+  const onClickAll = () => {
+    if (feeSelected && fromAvailableBalance) {
+      const transferFromBalance = (fromAvailableBalance || 0) - feeSelected
+
+      if (transferFromBalance) {
+        setValue('transfer_amount', (transferFromBalance || '').toString())
+        clearErrors('transfer_amount')
+      }
+    }
+  }
+
   return (
     <Stack
       direction={'row'}
@@ -33,11 +38,11 @@ const AmountHelperText: React.FC<AmountHelperTextProps> = ({
           <Typography variant={'body2'} fontWeight={600}>
             Available:
           </Typography>
-          {isLoadingBalance ? (
+          {balanceFetchStatus === 'loading' ? (
             <Skeleton width={100} height={20} sx={{ marginLeft: '5px' }} />
           ) : (
             <Typography variant={'body2'} sx={{ marginLeft: '5px' }}>
-              {roundAndSeparate(accountBalance, 6)}
+              {roundAndSeparate(fromAvailableBalance, 18)}
             </Typography>
           )}
         </Stack>
@@ -46,28 +51,26 @@ const AmountHelperText: React.FC<AmountHelperTextProps> = ({
           <Typography variant={'body2'} fontWeight={600}>
             Fee:
           </Typography>
-          {isLoadingFee ? (
+          {feeFetchStatus === 'loading' && !feeSelected ? (
             <Skeleton width={50} height={20} sx={{ marginLeft: '5px' }} />
           ) : (
-            <Typography variant={'body2'} sx={{ marginLeft: '5px' }}>
-              {roundAndSeparate(transferFee, 6, typeof transferFee === 'number' ? '0' : '-')}
-            </Typography>
+            <FeeInput />
           )}
         </Stack>
       </Stack>
 
       <Button
         sx={{
-          textAlign: 'right',
           paddingX: 0,
-          fontWeight: 600,
           fontSize: 12,
+          fontWeight: 600,
+          textAlign: 'right',
           textDecoration: 'underline',
           '&:hover': {
             textDecoration: 'underline',
           },
         }}
-        disabled={!accountBalance}
+        disabled={!fromAvailableBalance || !feeSelected || feeFetchStatus === 'not-fetched'}
         onClick={onClickAll}
       >
         Transfer all
@@ -75,5 +78,3 @@ const AmountHelperText: React.FC<AmountHelperTextProps> = ({
     </Stack>
   )
 }
-
-export default AmountHelperText

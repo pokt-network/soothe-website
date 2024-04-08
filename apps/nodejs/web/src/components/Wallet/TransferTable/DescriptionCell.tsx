@@ -28,6 +28,7 @@ interface DescriptionCellProps {
   externalWallet?: string
   height?: number
   hash?: string
+  purpose?: string
   block_time?: Moment
   chain: SupportedChains
 }
@@ -40,9 +41,16 @@ const DescriptionCell: React.FC<DescriptionCellProps> = ({
   block_time,
   hash,
   chain,
+  purpose,
 }) => {
   const accountsMap: Record<string, string> = useAppSelector((state) => state.account.accountsMap)
   const contactsMap = useAppSelector((state) => state.contact.walletsByChainMap[chain])
+
+  const purposes = useAppSelector((state) => state.purpose.purposes)
+
+  const purposesMap = useMemo(() => {
+    return purposes.reduce((acc, item) => ({ ...acc, [item._id]: item }), {})
+  }, [purposes])
 
   const loading = isLoading || false
 
@@ -70,7 +78,7 @@ const DescriptionCell: React.FC<DescriptionCellProps> = ({
 
         <Stack direction={'row'} flexGrow={1} spacing={'10px'}>
           <Typography fontWeight={600}>Purpose:</Typography>
-          <ValueText isLoading={loading}>{''}</ValueText>
+          <ValueText isLoading={loading}>{purposesMap[purpose]?.name || 'N/A'}</ValueText>
         </Stack>
       </Stack>
 

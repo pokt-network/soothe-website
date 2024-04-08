@@ -128,7 +128,7 @@ const TransferTo: React.FC<TransferToProps> = ({
           wallets={wallets}
           rules={{ required: 'Required' }}
           textFieldProps={{
-            label: 'Transfer From',
+            label: 'Transfer To',
             disabled,
           }}
           disabled={disabled}

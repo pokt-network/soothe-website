@@ -1,4 +1,6 @@
-import { Moment } from 'moment-timezone'
+import type { Moment } from 'moment-timezone'
+import type { Transaction } from 'web3-types'
+import type { SuggestedGasFee } from '@/types'
 
 export type BalanceByAddressType = { address: string; balance: number }
 
@@ -44,7 +46,7 @@ export interface BaseChainDatasource {
     pageCursor?: string | number
   ): Promise<ListTransfersByAddressResponse>
 
-  getTransferFee(): Promise<number>
+  getTransferFee: (() => Promise<number>) | ((transaction: Transaction) => Promise<SuggestedGasFee>)
 
   getPendingBalanceByAccount?: (addresses: string[]) => Promise<IPendingBalanceByAddress[]>
 

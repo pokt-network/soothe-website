@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SupportedChains } from '@/constants/supportedChains'
-import { DataGridPro, GridColDef } from '@mui/x-data-grid-pro'
+import { DataGridPro, GridActionsCellItem, GridColDef, GridRowParams } from '@mui/x-data-grid-pro'
 import { ListTransferItem } from '@/datasource/chains/base'
 import { useListTransfers } from '@/hooks/chains'
 import { useFetchPricesQuery } from '@/features/cryptoPrice/slice'
@@ -18,6 +18,10 @@ import IconButton from '@mui/material/IconButton'
 import DownloadIcon from '@soothe/ui/src/assets/icons/download.svg'
 import CollapseIcon from '@soothe/ui/src/assets/icons/collapse.svg'
 import PrintIcon from '@soothe/ui/src/assets/icons/print.svg'
+import SaveAsIcon from '@mui/icons-material/SaveAs'
+import { useAppSelector } from '@/hooks/redux'
+import { OfflineTransferDs, Transfer } from '@/datasource/transfer'
+import SaveExistingTransferDialog from '@/components/Transfer/SaveExistingTransferDialog'
 
 interface TransferTableProps {
   address: string
@@ -26,6 +30,7 @@ interface TransferTableProps {
 
 interface Row extends ListTransferItem {
   description: string
+  purpose: string
   value: number
   loading?: boolean
 }
@@ -33,7 +38,30 @@ interface Row extends ListTransferItem {
 type KeyRow = keyof Row
 type ValuesType = Row[KeyRow]
 
+let offlineTransferDs: OfflineTransferDs
+
 const TransferTable: React.FC<TransferTableProps> = ({ address, chain }) => {
+  const workspaceKey = useAppSelector((state) => state.workspace.key)
+  const workspace = useAppSelector((state) => state.workspace.workspace)
+
+  const [loadedTransfersMapByHash, setLoadedTransfersMapByHash] = useState<
+    Record<string, Transfer>
+  >({})
+
+  const loadOfflineTransfers = async () => {
+    if (!offlineTransferDs) offlineTransferDs = new OfflineTransferDs(workspace._id, workspaceKey)
+
+    const transfers = await offlineTransferDs.getAll()
+
+    console.log(transfers)
+
+    setLoadedTransfersMapByHash(
+      transfers.reduce((acc, item) => ({ ...acc, [item.hash]: item }), {})
+    )
+
+    return loadedTransfersMapByHash
+  }
+
   const { listTransfers, isLoading, response, error } = useListTransfers()
   const { items, nextCursorPage, hasNextPage } = response || {}
   const theme = useTheme()
@@ -42,8 +70,23 @@ const TransferTable: React.FC<TransferTableProps> = ({ address, chain }) => {
 
   const isLoadingRows = isLoading || (items === null && !error)
 
+  const [transferToSave, setTransferToSave] = useState<{
+    hash: string
+    id?: string
+    defaultPurpose?: string
+    defaultInternalMemo?: string
+  }>(null)
+
   useEffect(() => {
-    listTransfers(address, chain)
+    // todo: move this to listTransfer hook
+    if (workspaceKey) {
+      loadOfflineTransfers().then(async () => {
+        await listTransfers(address, chain).catch()
+      })
+    } else {
+      listTransfers(address, chain).catch()
+    }
+
     // eslint-disable-next-line
   }, [address, chain])
 
@@ -100,6 +143,7 @@ const TransferTable: React.FC<TransferTableProps> = ({ address, chain }) => {
             height={params.row.height}
             hash={params.row.hash}
             block_time={params.row.block_time}
+            purpose={params.row.purpose}
             chain={chain}
           />
         )
@@ -150,8 +194,31 @@ const TransferTable: React.FC<TransferTableProps> = ({ address, chain }) => {
         headerAlign: 'right',
         align: 'right',
       },
+      {
+        field: 'actions',
+        type: 'actions',
+        width: 70,
+        getActions: (params: GridRowParams<Row>) => [
+          <GridActionsCellItem
+            icon={<SaveAsIcon />}
+            label={'Save'}
+            key={'save_as'}
+            onClick={() => {
+              const hash = params.row.hash
+              const transferFromLoaded = loadedTransfersMapByHash[hash]
+
+              setTransferToSave({
+                hash,
+                id: transferFromLoaded?._id,
+                defaultPurpose: transferFromLoaded?.purpose,
+                defaultInternalMemo: transferFromLoaded?.internal_memo,
+              })
+            }}
+          />,
+        ],
+      },
     ],
-    [cellRenderer]
+    [cellRenderer, loadedTransfersMapByHash]
   )
 
   const rows = useMemo(() => {
@@ -163,8 +230,20 @@ const TransferTable: React.FC<TransferTableProps> = ({ address, chain }) => {
       return [...items, { loading: true, hash: 'loading_1' }, { loading: true, hash: 'loading_2' }]
     }
 
+    // todo: move this to listTransfer hook
+    if (workspaceKey) {
+      return items?.map((item) => {
+        const transferFromLoaded = loadedTransfersMapByHash[item.hash]
+
+        return {
+          ...item,
+          purpose: transferFromLoaded?.purpose,
+        }
+      })
+    }
+
     return items
-  }, [items, isLoadingRows])
+  }, [items, isLoadingRows, workspaceKey, loadedTransfersMapByHash])
 
   const onRowsScrollEnd: GridEventListener<'rowsScrollEnd'> = useCallback(
     (params) => {
@@ -176,86 +255,95 @@ const TransferTable: React.FC<TransferTableProps> = ({ address, chain }) => {
   )
 
   return (
-    <Stack
-      flexGrow={1}
-      bgcolor={theme.customColors.white}
-      border={`1px solid ${theme.customColors.dark25}`}
-      boxShadow={'0px 0px 4px rgba(0, 0, 0, 0.2)'}
-      marginTop={2}
-      minHeight={500}
-    >
+    <>
       <Stack
-        height={60}
-        justifyContent={'center'}
-        paddingX={2}
-        borderBottom={`1px solid ${theme.customColors.dark25}`}
+        flexGrow={1}
+        bgcolor={theme.customColors.white}
+        border={`1px solid ${theme.customColors.dark25}`}
+        boxShadow={'0px 0px 4px rgba(0, 0, 0, 0.2)'}
+        marginTop={2}
+        minHeight={500}
       >
-        <Typography variant={'h5'} fontWeight={600} letterSpacing={'0.5px'}>
-          Account Activity
-        </Typography>
-      </Stack>
-      <Stack
-        height={60}
-        borderBottom={`1px solid ${theme.customColors.dark25}`}
-        bgcolor={theme.customColors.dark2}
-        direction={'row'}
-        justifyContent={'space-between'}
-        alignItems={'center'}
-        pl={2}
-        py={1.5}
-        pr={1}
-        boxSizing={'border-box'}
-      >
-        <Stack direction={'row'} spacing={1.5} alignItems={'center'}>
-          <Typography variant={'h6'} color={theme.customColors.dark75} letterSpacing={'0.5px'}>
-            Showing
-          </Typography>
-          <TextField select value={'all'} sx={{ width: 250 }}>
-            <MenuItem value={'all'}>All Transactions</MenuItem>
-          </TextField>
-          <Typography
-            sx={{ textDecoration: 'underline', cursor: 'pointer' }}
-            color={theme.customColors.primary500}
-            letterSpacing={'0.5px'}
-            variant={'h6'}
-          >
-            Search
+        <Stack
+          height={60}
+          justifyContent={'center'}
+          paddingX={2}
+          borderBottom={`1px solid ${theme.customColors.dark25}`}
+        >
+          <Typography variant={'h5'} fontWeight={600} letterSpacing={'0.5px'}>
+            Account Activity
           </Typography>
         </Stack>
-        <Stack direction={'row'} alignItems={'center'}>
-          <IconButton>
-            <PrintIcon />
-          </IconButton>
-          <IconButton>
-            <DownloadIcon />
-          </IconButton>
-          <IconButton>
-            <CollapseIcon />
-          </IconButton>
+        <Stack
+          height={60}
+          borderBottom={`1px solid ${theme.customColors.dark25}`}
+          bgcolor={theme.customColors.dark2}
+          direction={'row'}
+          justifyContent={'space-between'}
+          alignItems={'center'}
+          pl={2}
+          py={1.5}
+          pr={1}
+          boxSizing={'border-box'}
+        >
+          <Stack direction={'row'} spacing={1.5} alignItems={'center'}>
+            <Typography variant={'h6'} color={theme.customColors.dark75} letterSpacing={'0.5px'}>
+              Showing
+            </Typography>
+            <TextField select value={'all'} sx={{ width: 250 }}>
+              <MenuItem value={'all'}>All Transactions</MenuItem>
+            </TextField>
+            <Typography
+              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+              color={theme.customColors.primary500}
+              letterSpacing={'0.5px'}
+              variant={'h6'}
+            >
+              Search
+            </Typography>
+          </Stack>
+          <Stack direction={'row'} alignItems={'center'}>
+            <IconButton>
+              <PrintIcon />
+            </IconButton>
+            <IconButton>
+              <DownloadIcon />
+            </IconButton>
+            <IconButton>
+              <CollapseIcon />
+            </IconButton>
+          </Stack>
         </Stack>
+        <DataGridPro
+          columns={columns}
+          rows={rows || []}
+          getRowId={(item) => item.hash}
+          rowHeight={100}
+          rowThreshold={0}
+          onRowsScrollEnd={onRowsScrollEnd}
+          hideFooter={true}
+          sx={{
+            '& .MuiDataGrid-cell': {
+              paddingTop: 2.5,
+              alignItems: 'flex-start',
+            },
+            // '& .MuiDataGrid-cell[data-field="block_time"]': {
+            //   marginLeft: 1,
+            // },
+            // '& .MuiDataGrid-cell[data-field="value"]': {
+            //   marginLeft: -2,
+            // },
+          }}
+        />
       </Stack>
-      <DataGridPro
-        columns={columns}
-        rows={rows || []}
-        getRowId={(item) => item.hash}
-        rowHeight={100}
-        rowThreshold={0}
-        onRowsScrollEnd={onRowsScrollEnd}
-        hideFooter={true}
-        sx={{
-          '& .MuiDataGrid-cell': {
-            paddingTop: 2.5,
-            alignItems: 'flex-start',
-          },
-          // '& .MuiDataGrid-cell[data-field="block_time"]': {
-          //   marginLeft: 1,
-          // },
-          // '& .MuiDataGrid-cell[data-field="value"]': {
-          //   marginLeft: -2,
-          // },
-        }}
+      <SaveExistingTransferDialog
+        open={!!transferToSave}
+        onClose={() => setTransferToSave(null)}
+        {...transferToSave}
+        hash={transferToSave?.hash || ''}
+        onTransferSaved={loadOfflineTransfers}
       />
-    </Stack>
+    </>
   )
 }
 
