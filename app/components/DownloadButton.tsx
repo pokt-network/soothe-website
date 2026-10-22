@@ -7,8 +7,8 @@ import FirefoxLogo from '../assets/firefox.svg'
 const chromeLink = 'https://chrome.google.com/webstore/detail/soothe-vault/mcgbfmioikpilhncbhdkjbjinfhgplpa'
 const firefoxLink = 'https://addons.mozilla.org/en-GB/firefox/addon/soothe-vault/'
 
-export default function DownloadButton() {
-  const userAgent = headers().get('user-agent')
+export default async function DownloadButton() {
+  const userAgent = (await headers()).get('user-agent')
 
   const isFirefox = userAgent && /Firefox/.test(userAgent)
   const isSupportedBrowser = userAgent && (/Chrome/.test(userAgent) || isFirefox)
