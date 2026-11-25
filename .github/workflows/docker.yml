@@ -49,7 +49,7 @@ jobs:
           tags: |
             # sha-<short sha>, same scheme as pokt-money; pnf-ops pins this tag
             type=sha,prefix=sha-
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/new-soothe-landing' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
