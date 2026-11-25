@@ -1,10 +1,10 @@
 name: Docker image
 
-# The landing site lives on the new-soothe-landing branch (main holds the older
-# @soothe/web app), so that branch is the one that publishes.
+# main is the landing site (the older @soothe/web app is kept on the legacy-web branch),
+# so main is the branch that publishes.
 on:
   push:
-    branches: [new-soothe-landing]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
